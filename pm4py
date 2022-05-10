@@ -1,0 +1,79 @@
+--In Co Lab
+
+import pandas as pd
+import numpy as np
+import os
+
+import requests
+import json
+import io
+
+!pip install pm4py
+
+from pm4py.objects.log.util import dataframe_utils
+from pm4py.objects.conversion.log import converter as log_converter
+from pm4py import *
+import os
+from pm4py.objects.log.importer.xes import importer as xes_importer
+from pm4py.algo.discovery.dfg import algorithm as dfg_discovery
+from pm4py.visualization.dfg import visualizer as dfg_visualization
+
+
+
+#Individual Map
+dfx = df[:]
+total = dfx['USER_PROFILE_ID'].nunique()
+i = 0 
+
+
+for user in dfx['USER_PROFILE_ID'].unique():
+  dfx = df[df['USER_PROFILE_ID'] == user]
+  # user_type = dfx['user_type'].max()
+  dfx = dfx[['USER_PROFILE_ID','DESCRIPTION','ACTION_CREATION_TIME']]
+  # dfx = df
+  dfx.columns = ['case:concept:name','concept:name','time:timestamp']
+  log_csv = dfx
+  log_csv = dataframe_utils.convert_timestamp_columns_in_df(log_csv)
+  log_csv = log_csv.sort_values('time:timestamp')
+  event_log = log_converter.apply(log_csv)
+  write_xes(event_log,'temp.xes')
+  log = xes_importer.apply(os.path.join('temp.xes'))
+
+  dfg = dfg_discovery.apply(log)
+  try:
+    gviz = dfg_visualization.apply(dfg, log=log, variant=dfg_visualization.Variants.FREQUENCY)
+    path = 'img_active/'  + '_' + str(user)[:7] + '.png'
+    co
+  except:
+    pass    
+  i+=1
+  print(i/total)
+  
+
+dfg_visualization.view(gviz)
+
+
+
+#Group Map
+dfx = df[:]
+
+
+# user_type = dfx['user_type'].max()
+dfx = df[['USER_PROFILE_ID','DESCRIPTION','ACTION_CREATION_TIME']]
+#dfx = df[['user_profile_id','description','action_creation_time']]
+# dfx = df
+dfx.columns = ['case:concept:name','concept:name','time:timestamp']
+log_csv = dfx
+log_csv = dataframe_utils.convert_timestamp_columns_in_df(log_csv)
+log_csv = log_csv.sort_values('time:timestamp')
+event_log = log_converter.apply(log_csv)
+write_xes(event_log,'temp.xes')
+log = xes_importer.apply(os.path.join('temp.xes'))
+
+dfg = dfg_discovery.apply(log)
+
+parameters = {dfg_visualization.Variants.FREQUENCY.value.Parameters.MAX_NO_EDGES_IN_DIAGRAM: 50}
+gviz = dfg_visualization.apply(dfg, log=log, variant=dfg_visualization.Variants.FREQUENCY,parameters=parameters)
+  
+
+dfg_visualization.view(gviz)
